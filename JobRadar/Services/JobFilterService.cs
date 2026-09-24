@@ -1,38 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JobRadar.Interfaces;
+﻿using JobRadar.Interfaces;
 using JobRadar.Models;
 using JobRadar.Options;
 using Microsoft.Extensions.Options;
 
-namespace JobRadar.Services
+namespace JobRadar.Services;
+
+public class JobFilterService : IJobFilter
 {
-    public class JobFilterService : IJobFilter
+    private readonly FilterOptions _options;
+
+    public JobFilterService(IOptions<FilterOptions> options)
     {
-        private readonly FilterOptions _options;
+        _options = options.Value;
+    }
 
-        public JobFilterService(IOptions<FilterOptions> options)
+    public List<Job> Filter(IEnumerable<Job> jobs)
+    {
+        return jobs
+            .Where(Matches)
+            .ToList();
+    }
+
+    private bool Matches(Job job)
+    {
+        var keywordMatch =
+            KeywordMatcher.Match(
+                job,
+                _options.Keywords);
+
+        if (!keywordMatch)
         {
-            _options = options.Value;
+            return false;
         }
-        public List<Job> Filter(IEnumerable<Job> jobs)
+
+        var locationMatch =
+            _options.Locations.Count == 0 ||
+            _options.Locations.Any(location =>
+                job.Location.Contains(
+                    location,
+                    StringComparison.OrdinalIgnoreCase));
+
+        if (!locationMatch)
         {
-            return jobs.Where(job =>
-            {
-                bool keywordMatch =
-                      KeywordMatcher.Match(job, _options.Keywords);
-
-                bool locationMatch =
-                    _options.Locations.Count == 0 ||
-                    _options.Locations.Any(location =>
-                        job.Location.Contains(location,
-                            StringComparison.OrdinalIgnoreCase));
-
-                return keywordMatch && locationMatch;
-            }).ToList();
+            return false;
         }
+
+        if (_options.RemoteOnly &&
+            !job.Location.Contains(
+                "remote",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
     }
 }

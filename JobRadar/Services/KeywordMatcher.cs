@@ -1,14 +1,20 @@
 ﻿using JobRadar.Models;
 
+namespace JobRadar.Services;
+
 public static class KeywordMatcher
 {
-    public static bool Match(Job job, IEnumerable<string> keywords)
+    public static bool Match(
+        Job job,
+        IEnumerable<string> keywords)
     {
-        string text =
+        var text =
             $"{job.Title} {job.Description}";
 
         return keywords.Any(keyword =>
-            text.Contains(keyword,
+            !string.IsNullOrWhiteSpace(keyword) &&
+            text.Contains(
+                keyword,
                 StringComparison.OrdinalIgnoreCase));
     }
 }

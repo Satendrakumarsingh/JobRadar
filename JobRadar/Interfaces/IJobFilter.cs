@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JobRadar.Models;
+﻿using JobRadar.Models;
 
-namespace JobRadar.Interfaces
+namespace JobRadar.Interfaces;
+
+public interface IJobFilter
 {
-    public interface IJobFilter
-    {
-        List<Job> Filter(IEnumerable<Job> jobs);
-    }
+    List<Job> Filter(
+        IEnumerable<Job> jobs);
 }

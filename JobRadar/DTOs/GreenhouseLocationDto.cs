@@ -5,5 +5,5 @@ namespace JobRadar.Dtos;
 public class GreenhouseLocationDto
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
 }

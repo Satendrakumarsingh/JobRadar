@@ -4,5 +4,6 @@ namespace JobRadar.Interfaces;
 
 public interface INotificationService
 {
-    Task NotifyAsync(IEnumerable<Job> jobs);
+    Task NotifyAsync(
+        IEnumerable<Job> jobs);
 }

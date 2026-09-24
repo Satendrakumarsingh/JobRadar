@@ -1,12 +1,12 @@
 [
-  {
-    "name": "Datadog",
-    "type": "Greenhouse",
-    "url": "https://boards.greenhouse.io/datadog"
-  },
-  {
-    "name": "Cloudflare",
-    "type": "Greenhouse",
-    "url": "https://boards.greenhouse.io/cloudflare"
-  }
+    {
+        "name": "Datadog",
+        "atsType": "Greenhouse",
+        "url": "https://boards.greenhouse.io/datadog"
+    },
+    {
+        "name": "Cloudflare",
+        "atsType": "Greenhouse",
+        "url": "https://boards.greenhouse.io/cloudflare"
+    }
 ]

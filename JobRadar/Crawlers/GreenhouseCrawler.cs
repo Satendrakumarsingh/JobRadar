@@ -1,4 +1,5 @@
-using System.Text.Json;
+using System.Net.Http.Json;
+using JobRadar.Dtos;
 using JobRadar.Enums;
 using JobRadar.Interfaces;
 using JobRadar.Models;
@@ -8,7 +9,8 @@ namespace JobRadar.Crawlers;
 public class GreenhouseCrawler : IJobCrawler
 {
     private readonly HttpClient _httpClient;
-    public CrawlerType AtsType => CrawlerType.Greenhouse;
+
+    public AtsType AtsType => AtsType.Greenhouse;
 
     public GreenhouseCrawler(HttpClient httpClient)
     {
@@ -17,48 +19,53 @@ public class GreenhouseCrawler : IJobCrawler
 
     public async Task<List<Job>> GetJobsAsync(Company company)
     {
-        var boardName = company.Url.Split('/').Last();
+        var boardName = GetBoardName(company.Url);
 
         var apiUrl =
-            $"https://boards-api.greenhouse.io/v1/boards/{boardName}/jobs";
+            $"https://boards-api.greenhouse.io/v1/boards/{boardName}/jobs?content=true";
 
-        var json = await _httpClient.GetStringAsync(apiUrl);
+        Console.WriteLine($"Company: {company.Name}");
+        Console.WriteLine($"Board: {boardName}");
+        Console.WriteLine($"API: {apiUrl}");
 
-        using JsonDocument doc = JsonDocument.Parse(json);
+        var httpResponse = await _httpClient.GetAsync(apiUrl);
 
-        var jobs = new List<Job>();
+        httpResponse.EnsureSuccessStatusCode();
 
-        foreach (var item in doc.RootElement
-                                .GetProperty("jobs")
-                                .EnumerateArray())
+        var response = await httpResponse.Content.ReadFromJsonAsync<GreenhouseResponse>();
+
+        if (response is null)
         {
-            jobs.Add(new Job
-            {
-                Company = company.Name,
-                Title = item.GetProperty("title").GetString() ?? "",
-                Url = item.GetProperty("absolute_url").GetString() ?? "",
-                Location = item
-                    .GetProperty("location")
-                    .GetProperty("name")
-                    .GetString() ?? ""
-            });
+            throw new InvalidOperationException(
+                $"Greenhouse returned an empty response for '{company.Name}'.");
         }
 
         return response.Jobs.Select(job => new Job
         {
             Id = job.Id.ToString(),
-
             Company = company.Name,
-
             Title = job.Title,
-
             Description = job.Description,
-
             Location = job.Location.Name,
-
             Url = job.Url,
-
             UpdatedDate = job.UpdatedAt
         }).ToList();
+    }
+
+    private static string GetBoardName(string companyUrl)
+    {
+        var uri = new Uri(companyUrl);
+
+        var segments = uri.AbsolutePath
+            .Trim('/')
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (segments.Length == 0)
+        {
+            throw new ArgumentException(
+                $"Invalid Greenhouse URL: '{companyUrl}'.");
+        }
+
+        return segments[0];
     }
 }

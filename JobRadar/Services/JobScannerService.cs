@@ -7,46 +7,73 @@ public class JobScannerService : IJobScannerService
 {
     private readonly ICompanyLoader _companyLoader;
     private readonly ICrawlerFactory _crawlerFactory;
+    private readonly IJobDateFilter _jobDateFilter;
     private readonly IJobFilter _jobFilter;
-    private readonly IJobCacheService _jobCacheService;
     private readonly INotificationService _notificationService;
 
     public JobScannerService(
-    ICompanyLoader companyLoader,
-    ICrawlerFactory crawlerFactory,
-    IJobFilter jobFilter,
-    IJobCacheService jobCacheService,
-    INotificationService notificationService)
+        ICompanyLoader companyLoader,
+        ICrawlerFactory crawlerFactory,
+        IJobDateFilter jobDateFilter,
+        IJobFilter jobFilter,
+        INotificationService notificationService)
     {
         _companyLoader = companyLoader;
         _crawlerFactory = crawlerFactory;
+        _jobDateFilter = jobDateFilter;
         _jobFilter = jobFilter;
-        _jobCacheService = jobCacheService;
         _notificationService = notificationService;
     }
 
     public async Task ScanAsync()
     {
-        await _jobCacheService.InitializeAsync();
-
-        var companies = await _companyLoader.LoadCompaniesAsync();
+        var companies =
+            await _companyLoader.LoadCompaniesAsync();
 
         foreach (var company in companies)
         {
-            await ScanCompanyAsync(company);
-        }
+            Console.WriteLine();
+            Console.WriteLine($"Scanning {company.Name}");
 
-        await _jobCacheService.SaveAsync();
+            try
+            {
+                await ScanCompanyAsync(company);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+
+                Console.WriteLine(
+                    $"Failed scanning {company.Name}: {ex.Message}");
+
+                Console.ResetColor();
+            }
+        }
     }
 
     private async Task ScanCompanyAsync(Company company)
     {
-        var jobs = await crawler.GetJobsAsync(company);
+        var crawler =
+            _crawlerFactory.GetCrawler(company.AtsType);
 
-        jobs = _jobFilter.Filter(jobs);
+        var jobs =
+            await crawler.GetJobsAsync(company);
 
-        var newJobs = _jobCacheService.GetNewJobs(jobs).ToList();
+        Console.WriteLine(
+            $"Jobs found: {jobs.Count}");
 
-        await _notificationService.NotifyAsync(newJobs);
+        var recentJobs =
+            _jobDateFilter.Filter(jobs);
+
+        Console.WriteLine(
+            $"Jobs in last configured period: {recentJobs.Count}");
+
+        var filteredJobs =
+            _jobFilter.Filter(recentJobs);
+
+        Console.WriteLine(
+            $"Jobs after keyword/location filter: {filteredJobs.Count}");
+
+        await _notificationService.NotifyAsync(filteredJobs);
     }
 }

@@ -5,7 +5,7 @@ namespace JobRadar.Interfaces;
 
 public interface IJobCrawler
 {
-    CrawlerType AtsType { get; }
+    AtsType AtsType { get; }
 
     Task<List<Job>> GetJobsAsync(Company company);
 }

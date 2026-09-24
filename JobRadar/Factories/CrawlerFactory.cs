@@ -1,25 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JobRadar.Enums;
 using JobRadar.Interfaces;
-using JobRadar.Models;
 
-namespace JobRadar.Factories
+namespace JobRadar.Factories;
+
+public class CrawlerFactory : ICrawlerFactory
 {
-    public class CrawlerFactory : ICrawlerFactory
+    private readonly IEnumerable<IJobCrawler> _crawlers;
+
+    public CrawlerFactory(IEnumerable<IJobCrawler> crawlers)
     {
-        private readonly IEnumerable<IJobCrawler> _crawlers;
+        _crawlers = crawlers;
+    }
 
-        public CrawlerFactory(IEnumerable<IJobCrawler> crawlers)
-        {
-            _crawlers = crawlers;
-        }
+    public IJobCrawler GetCrawler(AtsType atsType)
+    {
+        var crawler = _crawlers.FirstOrDefault(
+            x => x.AtsType == atsType);
 
-        public IJobCrawler GetCrawler(CrawlerType crawlerType)
-        {
-            return _crawlers.First(x => x.AtsType == crawlerType);
-        }
+        return crawler
+            ?? throw new NotSupportedException(
+                $"No crawler registered for ATS type '{atsType}'.");
     }
 }

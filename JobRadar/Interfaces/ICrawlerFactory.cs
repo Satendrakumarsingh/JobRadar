@@ -1,8 +1,8 @@
-using JobRadar.Models;
+using JobRadar.Enums;
 
 namespace JobRadar.Interfaces;
 
 public interface ICrawlerFactory
 {
-    IJobCrawler GetCrawler(CrawlerType crawlerType);
+    IJobCrawler GetCrawler(AtsType atsType);
 }

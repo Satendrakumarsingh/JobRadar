@@ -15,12 +15,13 @@ public class ConsoleNotificationService : INotificationService
 
             Console.ResetColor();
 
-            Console.WriteLine(job.Company);
-            Console.WriteLine(job.Title);
-            Console.WriteLine(job.Location);
-            Console.WriteLine(job.Url);
+            Console.WriteLine($"Company  : {job.Company}");
+            Console.WriteLine($"Title    : {job.Title}");
+            Console.WriteLine($"Location : {job.Location}");
+            Console.WriteLine($"URL      : {job.Url}");
 
-            Console.WriteLine(new string('-', 60));
+            Console.WriteLine(
+                new string('-', 60));
         }
 
         return Task.CompletedTask;

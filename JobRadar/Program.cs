@@ -1,28 +1,36 @@
-﻿using JobRadar.Interfaces;
+﻿using JobRadar.Crawlers;
+using JobRadar.Factories;
+using JobRadar.Interfaces;
+using JobRadar.Options;
 using JobRadar.Services;
-using JobRadar.Crawlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using JobRadar.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<IJobCrawler, GreenhouseCrawler>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "JobRadar/1.0");
+});
 
 builder.Services.AddSingleton<ICompanyLoader, CompanyLoader>();
 builder.Services.AddSingleton<ICrawlerFactory, CrawlerFactory>();
 builder.Services.AddSingleton<IJobScannerService, JobScannerService>();
-builder.Services.AddHttpClient<IJobCrawler, GreenhouseCrawler>();
 builder.Services.AddSingleton<IJobFilter, JobFilterService>();
-//builder.Services.AddSingleton<IFilterLoader, FilterLoader>(); removed
-builder.Services.AddSingleton<IJobCacheService, JobCacheService>();
+builder.Services.AddSingleton<IJobDateFilter, JobDateFilterService>();
 builder.Services.AddSingleton<INotificationService, ConsoleNotificationService>();
+
 builder.Services.Configure<FilterOptions>(
     builder.Configuration.GetSection(FilterOptions.SectionName));
-builder.Services.Configure<CacheOptions>(
-    builder.Configuration.GetSection(CacheOptions.SectionName));
 
-var host = builder.Build();
+builder.Services.Configure<JobSearchOptions>(
+    builder.Configuration.GetSection(JobSearchOptions.SectionName));
+
+
+using var host = builder.Build();
 
 var scanner = host.Services.GetRequiredService<IJobScannerService>();
 
